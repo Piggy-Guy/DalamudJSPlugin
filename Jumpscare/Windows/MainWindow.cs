@@ -46,7 +46,7 @@ public class MainWindow : Window, IDisposable
     {
         this.config = config;
 
-        // Assign initial paths
+        // assign initial paths
         imgPath = imagePath ?? "";
         soundPath = wavPath ?? "";
 
@@ -56,7 +56,8 @@ public class MainWindow : Window, IDisposable
 
     public void Dispose()
     {
-        preloadCts?.Cancel();  // cancel any pending preload
+        // cancel any pending preload
+        preloadCts?.Cancel();  
         GIF?.Dispose();
     }
 
@@ -129,22 +130,36 @@ public class MainWindow : Window, IDisposable
         triggerTime = null;
         soundPlayed = false;
 
-        // Randomize selection if enabled
-        if (config.Images.Any(e => e.Enabled))
+        // picks new image
+        var enabledImages = config.Images.Where(e => e.Enabled).ToList();
+        if (enabledImages.Count > 0)
         {
-            var enabledImages = config.Images.Where(e => e.Enabled).ToList();
-            imgPath = ResolveImagePath(enabledImages[rng.Next(enabledImages.Count)].Path);
+            // randomly pick if more than one, otherwise pick the only one
+            var imageEntry = enabledImages.Count == 1
+                ? enabledImages[0]
+                : enabledImages[rng.Next(enabledImages.Count)];
+
+            imgPath = ResolveImagePath(imageEntry.Path);
         }
 
-        if (config.Sounds.Any(e => e.Enabled))
+        // pick new sound
+        var enabledSounds = config.Sounds.Where(e => e.Enabled).ToList();
+        if (enabledSounds.Count > 0)
         {
-            var enabledSounds = config.Sounds.Where(e => e.Enabled).ToList();
-            soundPath = ResolveSoundPath(enabledSounds[rng.Next(enabledSounds.Count)].Path);
+            // randomly pick if more than one, otherwise pick the only one
+            var soundEntry = enabledSounds.Count == 1
+                ? enabledSounds[0]
+                : enabledSounds[rng.Next(enabledSounds.Count)];
+
+            soundPath = ResolveSoundPath(soundEntry.Path);
         }
 
         BeginPreload();
-        if (isRunning) ScheduleNextTrigger();
+
+        if (isRunning)
+            ScheduleNextTrigger();
     }
+
 
 
 
@@ -153,14 +168,14 @@ public class MainWindow : Window, IDisposable
         if (!IsOpen)
         {
             IsOpen = true;
-            isRunning = true; // mark as running
+            isRunning = true;
             BeginPreload();
             ScheduleNextTrigger();
         }
         else
         {
             triggerTime = null;
-            isRunning = false; // mark as stopped
+            isRunning = false;
             IsOpen = false;
         }
     }

@@ -6,12 +6,9 @@ namespace Jumpscare
 {
     public static class Sounds
     {
-        private static IWavePlayer? player;
-        private static AudioFileReader? reader;
+        private static IWavePlayer? Player;
+        private static AudioFileReader? Reader;
 
-        /// <summary>
-        /// Plays an audio file (WAV, MP3, etc.)
-        /// </summary>
         public static void Play(string path)
         {
             try
@@ -22,15 +19,15 @@ namespace Jumpscare
                     return;
                 }
 
-                Stop(); // stop any currently playing sound
+                Stop();
 
-                reader = new AudioFileReader(path);
-                player = new WaveOutEvent();
+                Reader = new AudioFileReader(path);
+                Player = new WaveOutEvent();
 
-                player.PlaybackStopped += (_, _) => Stop();
+                Player.PlaybackStopped += (_, _) => Stop();
 
-                player.Init(reader);
-                player.Play();
+                Player.Init(Reader);
+                Player.Play();
             }
             catch (Exception ex)
             {
@@ -39,25 +36,22 @@ namespace Jumpscare
             }
         }
 
-        /// <summary>
-        /// Stops playback and releases audio resources
-        /// </summary>
         public static void Stop()
         {
             try
             {
-                player?.Stop();
+                Player?.Stop();
             }
             catch
             {
-                // ignore stop race conditions
+                // prevents errors silently while disposing
             }
 
-            player?.Dispose();
-            reader?.Dispose();
+            Player?.Dispose();
+            Reader?.Dispose();
 
-            player = null;
-            reader = null;
+            Player = null;
+            Reader = null;
         }
     }
 }

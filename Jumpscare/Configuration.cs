@@ -11,8 +11,6 @@ public class Configuration : IPluginConfiguration
     public int Version { get; set; } = 0;
 
     public bool IsConfigWindowMovable { get; set; } = true;
-
-    // New random timer settings
     public int MinTriggerSeconds { get; set; } = 10;
     public int MaxTriggerSeconds { get; set; } = 10000;
     public bool ShowCountdownTimer { get; set; } = false;
@@ -55,7 +53,7 @@ public class Configuration : IPluginConfiguration
             Images = new List<MediaEntry>(DefaultImages);
         if (Sounds == null || Sounds.Count == 0)
             Sounds = new List<MediaEntry>(DefaultSounds);
-        // Clamp min/max between 10–100000
+        // clamp min/max between 10–100000
         if (MinTriggerSeconds < 10) MinTriggerSeconds = 10;
         if (MaxTriggerSeconds > 100000) MaxTriggerSeconds = 100000;
         if (MaxTriggerSeconds <= MinTriggerSeconds)

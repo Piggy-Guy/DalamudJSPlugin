@@ -21,7 +21,7 @@ public class ConfigWindow : Window, IDisposable
     private IWavePlayer? previewPlayer;
     private AudioFileReader? previewReader;
 
-    // Store rejection messages so they persist between frames
+    // store rejection messages so they persist between frames
     private string imageRejectionMessage = "";
     private string soundRejectionMessage = "";
 
@@ -48,13 +48,13 @@ public class ConfigWindow : Window, IDisposable
 
     public override void Draw()
     {
-        // --- Status indicator ---
+        // status indicator
         if (plugin.MainWindow.IsRunning)
             ImGui.TextColored(new Vector4(0f, 1f, 0f, 1f), "Jumpscare timer is ACTIVE");
         else
             ImGui.TextColored(new Vector4(1f, 0f, 0f, 1f), "Jumpscare timer is INACTIVE");
 
-        // --- Jumpscare toggle button ---
+        // jumpscare toggle button
         if (plugin.MainWindow.IsRunning)
         {
             if (ImGui.Button("Stop Timer"))
@@ -81,28 +81,28 @@ public class ConfigWindow : Window, IDisposable
 
         ImGui.Text("Trigger Timing");
 
-        // --- Min seconds ---
+        // min seconds
         int minSecs = configuration.MinTriggerSeconds;
         if (ImGui.InputInt("Min Seconds (10)", ref minSecs))
         {
-            // Clamp minSecs between 10 and (maxSecs - 1)
+            // clamp minSecs between 10 and (maxSecs - 1)
             minSecs = Math.Clamp(minSecs, 10, configuration.MaxTriggerSeconds - 1);
             configuration.MinTriggerSeconds = minSecs;
             configuration.Save();
         }
 
-        // --- Max seconds ---
+        // max seconds
         int maxSecs = configuration.MaxTriggerSeconds;
         if (ImGui.InputInt("Max Seconds (100000)", ref maxSecs))
         {
-            // Clamp maxSecs between (minSecs + 1) and 100000
+            // clamp maxSecs between (minSecs + 1) and 100000
             maxSecs = Math.Clamp(maxSecs, configuration.MinTriggerSeconds + 1, 100000);
             configuration.MaxTriggerSeconds = maxSecs;
             configuration.Save();
         }
         ImGui.Separator();
 
-        // --- Images ---
+        // images
         if (ImGui.TreeNode("Images"))
         {
             if (ImGui.Button("Reset Images to Defaults"))
@@ -129,13 +129,14 @@ public class ConfigWindow : Window, IDisposable
 
                     ImGui.TableNextRow();
 
+                    // enabled checkbox
                     ImGui.TableNextColumn();
                     bool enabled = entry.Enabled;
                     if (ImGui.Checkbox($"##img_enabled_{i}", ref enabled))
                     {
                         if (!enabled && entry.Enabled && !CanDisable(configuration.Images))
                         {
-                            // Block disabling the last enabled image
+                            // block disabling the last enabled image
                             enabled = true;
                         }
                         else
@@ -146,18 +147,18 @@ public class ConfigWindow : Window, IDisposable
                         }
                     }
 
-
+                    // file path
                     ImGui.TableNextColumn();
                     if (ImGui.Selectable(entry.Path))
                     {
-                        previewWindow.SetPath(entry.Path); // only update the GIF
+                        previewWindow.SetPath(entry.Path); 
                     }
 
                 }
                 ImGui.EndTable();
             }
 
-            // ✅ ADD MEDIA CONTROLS GO HERE
+            // add new image file
             DrawAddMedia("GIF/PNG/JPG", configuration.Images, ref newImagePath);
 
             if (!string.IsNullOrEmpty(imageRejectionMessage))
@@ -170,7 +171,7 @@ public class ConfigWindow : Window, IDisposable
 
         ImGui.Separator();
 
-        // --- Sounds ---
+        // sounds
         if (ImGui.TreeNode("Sounds"))
         {
             if (ImGui.Button("Reset Sounds to Defaults"))
@@ -196,14 +197,14 @@ public class ConfigWindow : Window, IDisposable
 
                     ImGui.TableNextRow();
 
-                    // --- Enabled checkbox ---
+                    // enabled checkbox
                     ImGui.TableNextColumn();
                     bool enabled = entry.Enabled;
                     if (ImGui.Checkbox($"##snd_enabled_{i}", ref enabled))
                     {
                         if (!enabled && entry.Enabled && !CanDisable(configuration.Sounds))
                         {
-                            // Prevent disabling last enabled sound
+                            // block disabling the last enabled sound
                             enabled = true;
                         }
                         else
@@ -214,7 +215,7 @@ public class ConfigWindow : Window, IDisposable
                         }
                     }
 
-                    // --- File path ---
+                    // file path
                     ImGui.TableNextColumn();
                     if (ImGui.Selectable(entry.Path))
                     {
@@ -225,7 +226,7 @@ public class ConfigWindow : Window, IDisposable
                 ImGui.EndTable();
             }
 
-            // --- Add new audio file ---
+            // add new audio file
             DrawAddMedia("WAV/MP3", configuration.Sounds, ref newSoundPath);
 
             if (!string.IsNullOrEmpty(soundRejectionMessage))
@@ -248,7 +249,7 @@ public class ConfigWindow : Window, IDisposable
     }
 
 
-    private (string imagePath, string soundPath) ResolveCurrentMediaPaths()
+    private (string? imagePath, string? soundPath) ResolveCurrentMediaPaths()
     {
         string? imgFile = PickRandomEnabled(configuration.Images);
         string? sndFile = PickRandomEnabled(configuration.Sounds);
@@ -271,7 +272,8 @@ public class ConfigWindow : Window, IDisposable
 
         if (ImGui.Button($"Add {label}") && !string.IsNullOrWhiteSpace(pathBuffer))
         {
-            string path = pathBuffer; // copy to local to avoid ref capture
+            // copy to local to avoid ref capture
+            string path = pathBuffer;
 
             if (!File.Exists(path))
             {
@@ -279,7 +281,7 @@ public class ConfigWindow : Window, IDisposable
                 return;
             }
 
-            // --- Size check ---
+            // size check
             long maxSize = 30L * 1024 * 1024; // 30 MB
             var fileInfo = new FileInfo(path);
             if (fileInfo.Length > maxSize)
@@ -299,7 +301,8 @@ public class ConfigWindow : Window, IDisposable
                 return;
             }
 
-            string fileNameOrPath = path; // keep absolute if external
+            // keep absolute if external
+            string fileNameOrPath = path;
             if (!targetList.Exists(e => e.Path.Equals(fileNameOrPath, StringComparison.OrdinalIgnoreCase)))
             {
                 targetList.Add(new MediaEntry
@@ -322,7 +325,8 @@ public class ConfigWindow : Window, IDisposable
     {
         try
         {
-            StopPreview(); // prevent overlap
+            // prevent overlap
+            StopPreview();
 
             previewReader = new AudioFileReader(path);
             previewPlayer = new WaveOutEvent();
@@ -361,11 +365,11 @@ public class ConfigWindow : Window, IDisposable
     }
     private string ResolveImagePath(string fileNameOrPath)
     {
-        // If absolute path and exists, use as-is
+        // if absolute path and exists, use as-is
         if (Path.IsPathRooted(fileNameOrPath) && File.Exists(fileNameOrPath))
             return fileNameOrPath;
 
-        // Otherwise, resolve relative to Data/visual
+        // otherwise resolve relative to Data/visual
         string baseDir = Plugin.PluginInterface.AssemblyLocation.Directory?.FullName
                          ?? Plugin.PluginInterface.GetPluginConfigDirectory();
         return Path.Combine(baseDir, "Data", "visual", fileNameOrPath);
@@ -373,9 +377,11 @@ public class ConfigWindow : Window, IDisposable
 
     private string ResolveSoundPath(string fileNameOrPath)
     {
+        // if absolute path and exists, use as-is
         if (Path.IsPathRooted(fileNameOrPath) && File.Exists(fileNameOrPath))
             return fileNameOrPath;
 
+        // otherwise resolve relative to Data/audio
         string baseDir = Plugin.PluginInterface.AssemblyLocation.Directory?.FullName
                          ?? Plugin.PluginInterface.GetPluginConfigDirectory();
         return Path.Combine(baseDir, "Data", "audio", fileNameOrPath);
@@ -394,7 +400,7 @@ public class ConfigWindow : Window, IDisposable
         string baseDir = Plugin.PluginInterface.AssemblyLocation.Directory?.FullName
                          ?? Plugin.PluginInterface.GetPluginConfigDirectory();
 
-        // Ensure at least one enabled image and sound exist
+        // ensure at least one enabled image and sound exist
         Configuration.EnsureAtLeastOneEnabled(configuration.Images);
         Configuration.EnsureAtLeastOneEnabled(configuration.Sounds);
 
@@ -403,9 +409,6 @@ public class ConfigWindow : Window, IDisposable
 
         string imgPath = Path.Combine(baseDir, "Data", "visual", imgFile);
         string sndPath = Path.Combine(baseDir, "Data", "audio", sndFile);
-
-        Plugin.Log.Information($"[ResolveInitialMedia] Image: {imgPath}");
-        Plugin.Log.Information($"[ResolveInitialMedia] Sound: {sndPath}");
 
         return (imgPath, sndPath);
     }

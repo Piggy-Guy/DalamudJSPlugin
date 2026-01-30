@@ -23,12 +23,9 @@ public class GifPreviewWindow : Window, IDisposable
             MinimumSize = new Vector2(300, 200)
         };
         lastFrameTime = DateTime.Now;
-        IsOpen = false; // initially hidden
+        IsOpen = false;
     }
 
-    /// <summary>
-    /// Change the GIF being displayed
-    /// </summary>
     public void SetPath(string path)
     {
         if (currentPath == path)
@@ -36,7 +33,7 @@ public class GifPreviewWindow : Window, IDisposable
 
         currentPath = ResolveImagePath(path);
         StartPreload();
-        IsOpen = true; // make sure window is visible
+        IsOpen = true;
     }
 
     private void StartPreload()
@@ -65,15 +62,22 @@ public class GifPreviewWindow : Window, IDisposable
 
                 var newGif = new GIFConvert(currentPath);
 
-                // Load textures on framework thread
+                // load textures on framework thread
                 Plugin.Framework.RunOnFrameworkThread(() =>
                 {
-                    if (token.IsCancellationRequested) return;
+                    try
+                    {
+                        if (token.IsCancellationRequested) return;
 
-                    newGif.EnsureTexturesLoaded();
-                    gif = newGif;
+                        newGif.EnsureTexturesLoaded();
+                        gif = newGif;
 
-                    resourcesLoaded = true;
+                        resourcesLoaded = true;
+                    }
+                    catch
+                    {
+                        // prevents errors silently while disposing
+                    }
                 });
             }
             catch (Exception ex)
@@ -102,7 +106,7 @@ public class GifPreviewWindow : Window, IDisposable
             gif.Update(deltaMs);
             gif.Render(ImGui.GetContentRegionAvail(), 1f);
 
-            // Loop GIF
+            // loop gif
             if (gif.Finished)
                 gif.Reset();
         }

@@ -33,19 +33,15 @@ public sealed class Plugin : IDalamudPlugin
     public Plugin()
     {
         Configuration = PluginInterface.GetPluginConfig() as Configuration ?? new Configuration();
-        // Ensure config defaults
         Configuration.EnsureDefaults();
         Configuration.EnsureAtLeastOneEnabled(Configuration.Images);
         Configuration.EnsureAtLeastOneEnabled(Configuration.Sounds);
         Configuration.Save();
 
-        // Create windows
         ConfigWindow = new ConfigWindow(this);
 
-        // Resolve initial media **before creating MainWindow**
         var paths = ConfigWindow.ResolveInitialMedia();
 
-        // Pass the resolved paths to MainWindow constructor
         MainWindow = new MainWindow(paths.imagePath, paths.soundPath, Configuration);
 
         WindowSystem.AddWindow(ConfigWindow);

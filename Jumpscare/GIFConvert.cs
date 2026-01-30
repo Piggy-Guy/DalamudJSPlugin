@@ -44,7 +44,7 @@ namespace Jumpscare
 
         public GIFConvert(string gifPath)
         {
-            // Create a unique folder for this instance
+            // create a unique folder for this instance
             tempFolder = Path.Combine(Path.GetTempPath(), "DalamudGifFrames", Guid.NewGuid().ToString("N"));
             Directory.CreateDirectory(tempFolder);
 
@@ -70,11 +70,11 @@ namespace Jumpscare
                     Plugin.Log.Warning($"GIFConvert: Failed to read frame delay for frame {i}, using fallback. Exception: {ex}");
                 }
 
-                // Copy pixels into buffer
+                // copy pixels into buffer
                 var pixelBuffer = new Rgba32[frame.Width * frame.Height];
                 frame.CopyPixelDataTo(pixelBuffer);
 
-                // Make new single-frame image
+                // make new single-frame image
                 using var singleFrameImage = Image.LoadPixelData<Rgba32>(
                     pixelBuffer,
                     frame.Width,
