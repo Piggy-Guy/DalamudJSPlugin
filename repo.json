@@ -21,7 +21,7 @@
     "LoadSync": false,
     "CanUnloadAsync": true,
     "LoadPriority": 0,
-    "IconUrl": "https://raw.githubusercontent.com/AdamDzwonkowski/DalamudJSPlugin/master/icon.png",
+    "IconUrl": "https://raw.githubusercontent.com/Piggy-Guy/DalamudJSPlugin/master/icon.png",
     "Punchline": "Give yourself a heart attack (inspired by joemkdd's Isaac mod).",
     "AcceptsFeedback": true,
     "IsHide": "False",
