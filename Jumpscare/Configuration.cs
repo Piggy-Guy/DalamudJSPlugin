@@ -1,6 +1,7 @@
 using Dalamud.Configuration;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Jumpscare;
 
@@ -10,81 +11,65 @@ public class Configuration : IPluginConfiguration
     public int Version { get; set; } = 0;
 
     public bool IsConfigWindowMovable { get; set; } = true;
-    public bool SomePropertyToBeSavedAndWithADefault { get; set; } = true;
-
-    public string SelectedImage { get; set; } = DefaultImages[0];
-    public string SelectedSound { get; set; } = DefaultSounds[0];
-
-    public bool RandomizeImages { get; set; } = false;
-    public bool RandomizeSounds { get; set; } = false;
-
-    public List<string> ImageOptions { get; set; } = new();
-    public List<string> SoundOptions { get; set; } = new();
 
     // New random timer settings
     public int MinTriggerSeconds { get; set; } = 10;
     public int MaxTriggerSeconds { get; set; } = 10000;
     public bool ShowCountdownTimer { get; set; } = false;
+    public List<MediaEntry> Images { get; set; } = new();
+    public List<MediaEntry> Sounds { get; set; } = new();
 
-
-    private static readonly string[] DefaultImages =
+    public class MediaEntry
     {
-        "visual/foxy-jumpscare.gif",
-        "visual/lick.gif",
-        "visual/pikmin.png",
-        "visual/pipe.png",
-        "visual/don.gif",
-        "visual/zenos.png",
-        "visual/skull.png",
-        "visual/autism.gif"
+        public bool Enabled { get; set; } = true;
+        public string Path { get; set; } = "";
+    }
+
+    public static readonly MediaEntry[] DefaultImages =
+    {
+        new() { Enabled = true, Path= "foxy-jumpscare.gif" },
+        new() { Enabled = false, Path= "lick.gif" },
+        new() { Enabled = false, Path= "pikmin.png" },
+        new() { Enabled = false, Path= "pipe.png" },
+        new() { Enabled = false, Path= "don.gif" },
+        new() { Enabled = false, Path= "zenos.png" },
+        new() { Enabled = false, Path= "skull.png" },
+        new() { Enabled = false, Path= "autism.gif" }
     };
 
-    private static readonly string[] DefaultSounds =
+    public readonly static MediaEntry[] DefaultSounds =
     {
-        "audio/foxy.wav",
-        "audio/apocbird.wav",
-        "audio/pikmin.wav",
-        "audio/pipe.wav",
-        "audio/don.wav",
-        "audio/zenos.wav",
-        "audio/bone.wav",
-        "audio/yippee.wav"
+        new() { Enabled = true, Path= "foxy.wav" },
+        new() { Enabled = false, Path= "apocbird.wav" },
+        new() { Enabled = false, Path= "pikmin.wav" },
+        new() { Enabled = false, Path= "pipe.wav" },
+        new() { Enabled = false, Path= "don.wav" },
+        new() { Enabled = false, Path= "zenos.wav" },
+        new() { Enabled = false, Path= "bone.wav" }, 
+        new() { Enabled = false, Path= "yippee.wav" }
     };
 
     public void EnsureDefaults()
     {
-        if (ImageOptions == null || ImageOptions.Count == 0)
-            ImageOptions = new List<string>(DefaultImages);
-
-        if (SoundOptions == null || SoundOptions.Count == 0)
-            SoundOptions = new List<string>(DefaultSounds);
-
-        if (string.IsNullOrEmpty(SelectedImage))
-            SelectedImage = ImageOptions[0];
-
-        if (string.IsNullOrEmpty(SelectedSound))
-            SelectedSound = SoundOptions[0];
-
+        if (Images == null || Images.Count == 0)
+            Images = new List<MediaEntry>(DefaultImages);
+        if (Sounds == null || Sounds.Count == 0)
+            Sounds = new List<MediaEntry>(DefaultSounds);
         // Clamp min/max between 10–100000
         if (MinTriggerSeconds < 10) MinTriggerSeconds = 10;
         if (MaxTriggerSeconds > 100000) MaxTriggerSeconds = 100000;
         if (MaxTriggerSeconds <= MinTriggerSeconds)
             MaxTriggerSeconds = MinTriggerSeconds + 1;
     }
-
-    public void ResetImageOptions()
+    public static void EnsureAtLeastOneEnabled(List<MediaEntry> entries)
     {
-        ImageOptions = new List<string>(DefaultImages);
-        SelectedImage = DefaultImages[0];
-        Save();
+        if (entries.Count == 0)
+            return;
+
+        if (!entries.Any(e => e.Enabled))
+            entries[0].Enabled = true;
     }
 
-    public void ResetSoundOptions()
-    {
-        SoundOptions = new List<string>(DefaultSounds);
-        SelectedSound = DefaultSounds[0];
-        Save();
-    }
 
     public void Save() => Plugin.PluginInterface.SavePluginConfig(this);
 }

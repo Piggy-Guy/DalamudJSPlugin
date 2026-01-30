@@ -153,6 +153,13 @@ namespace Jumpscare
             ImGui.SetCursorPos(Vector2.Zero);
             ImGui.Image(wrap.Handle, size, Vector2.Zero, Vector2.One, new Vector4(1f, 1f, 1f, alpha));
         }
+        public void Reset()
+        {
+            currentFrame = 0;
+            timeAccumulator = 0f;
+            Finished = false;
+            FadeTimer = 0;
+        }
 
         public void Dispose()
         {

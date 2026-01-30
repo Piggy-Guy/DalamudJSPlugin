@@ -4,127 +4,94 @@ using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using System;
 using System.IO;
+using System.Linq;
 using System.Numerics;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Jumpscare.Windows;
 
 public class MainWindow : Window, IDisposable
 {
-    private readonly object reloadLock = new();
-
     private string imgPath;
-    private string? soundPath;
+    private string soundPath;
 
     private GIFConvert? GIF;
 
     private bool preloadStarted = false;
-    private bool resourcesLoaded = false;
-    private bool preloadDone = false;
+    private CancellationTokenSource? preloadCts;
 
     private DateTime lastFrameTime;
     private DateTime? triggerTime = null;
     private TimeSpan delay = TimeSpan.Zero;
 
     private readonly Random rng = new();
-    private Task? preloadTask;
 
     private bool soundPlayed = false;
     private readonly Configuration config;
 
-    private bool isRunning = false; // ⬅ Tracks whether /jumpscare is active
-    public bool IsRunning => isRunning && triggerTime.HasValue && DateTime.Now < triggerTime.Value;
+    private bool isRunning = false;
+    public bool IsRunning => isRunning;
 
-    public MainWindow(string imagePath, string? wavPath, Configuration config)
-        : base("Jumpscare##HiddenID",
-               ImGuiWindowFlags.NoTitleBar
-             | ImGuiWindowFlags.NoScrollbar
-             | ImGuiWindowFlags.NoDecoration
-             | ImGuiWindowFlags.NoFocusOnAppearing
-             | ImGuiWindowFlags.NoNavFocus
-             | ImGuiWindowFlags.NoInputs
-             | ImGuiWindowFlags.NoMouseInputs
-             | ImGuiWindowFlags.NoBackground)
+    public MainWindow(string imagePath, string wavPath, Configuration config)
+    : base("Jumpscare##HiddenID",
+           ImGuiWindowFlags.NoTitleBar
+         | ImGuiWindowFlags.NoScrollbar
+         | ImGuiWindowFlags.NoDecoration
+         | ImGuiWindowFlags.NoFocusOnAppearing
+         | ImGuiWindowFlags.NoNavFocus
+         | ImGuiWindowFlags.NoInputs
+         | ImGuiWindowFlags.NoMouseInputs
+         | ImGuiWindowFlags.NoBackground)
     {
-        imgPath = imagePath;
-        soundPath = wavPath;
         this.config = config;
+
+        // Assign initial paths
+        imgPath = imagePath ?? "";
+        soundPath = wavPath ?? "";
+
         lastFrameTime = DateTime.Now;
     }
 
-    public void Dispose() => GIF?.Dispose();
 
-    public void Reload(string newImgPath, string? newSoundPath)
+    public void Dispose()
     {
-        lock (reloadLock)
-        {
-            Plugin.Log.Information($"Reloading jumpscare with {newImgPath}, {newSoundPath}");
-            StopPlayback();
-
-            GIF?.Dispose();
-            GIF = null;
-
-            preloadStarted = false;
-            preloadDone = false;
-            resourcesLoaded = false;
-            soundPlayed = false;
-
-            imgPath = newImgPath;
-            soundPath = newSoundPath;
-
-            BeginPreload();
-            if (isRunning) ScheduleNextTrigger();
-        }
+        preloadCts?.Cancel();  // cancel any pending preload
+        GIF?.Dispose();
     }
-
-    private void StopPlayback() => triggerTime = null;
 
     private void BeginPreload()
     {
         if (preloadStarted) return;
         preloadStarted = true;
 
-        preloadTask = Task.Run(() =>
+        preloadCts = new CancellationTokenSource();
+        var token = preloadCts.Token;
+
+        Task.Run(() =>
         {
-            if (!File.Exists(imgPath))
-            {
-                Plugin.Log.Error($"Image not found: {imgPath}");
-                resourcesLoaded = true;
-                return;
-            }
-
-            var ext = Path.GetExtension(imgPath).ToLowerInvariant();
-
             try
             {
-                // --- GIFs ---
-                if (ext == ".gif")
+                if (!File.Exists(imgPath))
                 {
-                    GIF = new GIFConvert(imgPath);
+                    Plugin.Log.Error($"Image not found: {imgPath}");
+                    return;
                 }
-                else
-                {
-                    // --- Static PNG/JPG as single-frame GIFConvert ---
-                    using var img = Image.Load<Rgba32>(imgPath);
-                    string tempGif = Path.Combine(Path.GetTempPath(), $"single_frame_{Guid.NewGuid()}.gif");
 
-                    img.SaveAsGif(tempGif); // Save as a single-frame GIF
-                    GIF = new GIFConvert(tempGif);
-                }
+                GIF = new GIFConvert(imgPath);
 
                 Plugin.Framework.RunOnFrameworkThread(() =>
                 {
+                    if (token.IsCancellationRequested) return;
+
                     GIF?.EnsureTexturesLoaded();
-                    preloadDone = true;
-                    resourcesLoaded = true;
                 });
             }
             catch (Exception ex)
             {
                 Plugin.Log.Error($"Preload failed: {ex}");
-                resourcesLoaded = true;
             }
-        });
+        }, token);
     }
 
     private void ScheduleNextTrigger()
@@ -139,46 +106,47 @@ public class MainWindow : Window, IDisposable
         triggerTime = DateTime.Now + delay;
     }
 
+    private string ResolveImagePath(string fileName)
+    {
+        string baseDir = Plugin.PluginInterface.AssemblyLocation.Directory?.FullName
+                         ?? Plugin.PluginInterface.GetPluginConfigDirectory();
+        return Path.Combine(baseDir, "Data", "visual", fileName);
+    }
+
+    private string ResolveSoundPath(string fileName)
+    {
+        string baseDir = Plugin.PluginInterface.AssemblyLocation.Directory?.FullName
+                         ?? Plugin.PluginInterface.GetPluginConfigDirectory();
+        return Path.Combine(baseDir, "Data", "audio", fileName);
+    }
+
     public void ResetPlayback()
     {
-        lock (reloadLock)
+        GIF?.Dispose();
+        GIF = null;
+
+        preloadStarted = false;
+        triggerTime = null;
+        soundPlayed = false;
+
+        // Randomize selection if enabled
+        if (config.Images.Any(e => e.Enabled))
         {
-            GIF?.Dispose();
-            GIF = null;
-
-            preloadStarted = false;
-            preloadDone = false;
-            resourcesLoaded = false;
-            triggerTime = null;
-            soundPlayed = false;
-
-            // Randomize selection only if enabled
-            if (config.RandomizeImages && config.ImageOptions.Count > 0)
-            {
-                var idx = rng.Next(config.ImageOptions.Count);
-                imgPath = Path.Combine(
-                    Plugin.PluginInterface.AssemblyLocation.Directory?.FullName
-                    ?? Plugin.PluginInterface.GetPluginConfigDirectory(),
-                    "Data",
-                    config.ImageOptions[idx]
-                );
-            }
-
-            if (config.RandomizeSounds && config.SoundOptions.Count > 0)
-            {
-                var idx = rng.Next(config.SoundOptions.Count);
-                soundPath = Path.Combine(
-                    Plugin.PluginInterface.AssemblyLocation.Directory?.FullName
-                    ?? Plugin.PluginInterface.GetPluginConfigDirectory(),
-                    "Data",
-                    config.SoundOptions[idx]
-                );
-            }
-
-            BeginPreload();
-            if (isRunning) ScheduleNextTrigger(); // Only schedule if user started /jumpscare
+            var enabledImages = config.Images.Where(e => e.Enabled).ToList();
+            imgPath = ResolveImagePath(enabledImages[rng.Next(enabledImages.Count)].Path);
         }
+
+        if (config.Sounds.Any(e => e.Enabled))
+        {
+            var enabledSounds = config.Sounds.Where(e => e.Enabled).ToList();
+            soundPath = ResolveSoundPath(enabledSounds[rng.Next(enabledSounds.Count)].Path);
+        }
+
+        BeginPreload();
+        if (isRunning) ScheduleNextTrigger();
     }
+
+
 
     public new void Toggle()
     {
@@ -212,7 +180,7 @@ public class MainWindow : Window, IDisposable
           | ImGuiWindowFlags.NoInputs
           | ImGuiWindowFlags.NoMouseInputs
           | ImGuiWindowFlags.NoBackground);
-
+        
         if (!triggerTime.HasValue)
         {
             ImGui.End();
@@ -226,13 +194,6 @@ public class MainWindow : Window, IDisposable
                 var remaining = triggerTime.Value - DateTime.Now;
                 ImGui.TextUnformatted($"Waiting... {remaining.TotalSeconds:F1}s");
             }
-            ImGui.End();
-            return;
-        }
-
-        if (!preloadDone)
-        {
-            ImGui.TextUnformatted("Preparing jumpscare...");
             ImGui.End();
             return;
         }
@@ -261,7 +222,7 @@ public class MainWindow : Window, IDisposable
 
             GIF.Render(windowSize, alpha);
         }
-        else if (resourcesLoaded)
+        else if (GIF == null)
         {
             ImGui.TextUnformatted($"Image not found or unsupported: {imgPath}");
         }
@@ -271,18 +232,10 @@ public class MainWindow : Window, IDisposable
 
     private void PlaySoundOnce()
     {
-        if (!soundPlayed && soundPath != null && File.Exists(soundPath))
+        if (!soundPlayed && !string.IsNullOrEmpty(soundPath) && File.Exists(soundPath))
         {
-            try
-            {
-                var player = new System.Media.SoundPlayer(soundPath);
-                player.Play();
-                soundPlayed = true;
-            }
-            catch (Exception ex)
-            {
-                Plugin.Log.Error($"Failed to play sound {soundPath}: {ex}");
-            }
+            Sounds.Play(soundPath);
+            soundPlayed = true;
         }
     }
 }

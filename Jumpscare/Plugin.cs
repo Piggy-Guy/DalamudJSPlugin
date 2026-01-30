@@ -1,10 +1,11 @@
 using Dalamud.Game.Command;
+using Dalamud.Interface.Windowing;
 using Dalamud.IoC;
 using Dalamud.Plugin;
-using System.IO;
-using Dalamud.Interface.Windowing;
 using Dalamud.Plugin.Services;
 using Jumpscare.Windows;
+using System.IO;
+using System.Linq;
 
 namespace Jumpscare;
 
@@ -32,18 +33,35 @@ public sealed class Plugin : IDalamudPlugin
     public Plugin()
     {
         Configuration = PluginInterface.GetPluginConfig() as Configuration ?? new Configuration();
+        // Ensure config defaults
         Configuration.EnsureDefaults();
+        Configuration.EnsureAtLeastOneEnabled(Configuration.Images);
+        Configuration.EnsureAtLeastOneEnabled(Configuration.Sounds);
+        Configuration.Save();
 
-        var dllDir = PluginInterface.AssemblyLocation.Directory?.FullName
-                     ?? PluginInterface.GetPluginConfigDirectory();
-        var imgPath = Path.Combine(dllDir, "Data", Configuration.SelectedImage);
-        var soundPath = Path.Combine(dllDir, "Data", Configuration.SelectedSound);
-
+        // Create windows
         ConfigWindow = new ConfigWindow(this);
-        MainWindow = new MainWindow(imgPath, soundPath, Configuration);
+
+        // Resolve initial media **before creating MainWindow**
+        var paths = ConfigWindow.ResolveInitialMedia();
+
+        // Pass the resolved paths to MainWindow constructor
+        MainWindow = new MainWindow(paths.imagePath, paths.soundPath, Configuration);
 
         WindowSystem.AddWindow(ConfigWindow);
         WindowSystem.AddWindow(MainWindow);
+
+        var dllDir = PluginInterface.AssemblyLocation.Directory?.FullName
+                     ?? PluginInterface.GetPluginConfigDirectory();
+        string dataDir = Path.Combine(dllDir, "Data");
+
+        // fallback to defaults if null
+        if (paths.imagePath == null || !File.Exists(paths.imagePath))
+            paths.imagePath = Path.Combine(dataDir, "visual", Configuration.DefaultImages.First(e => e.Enabled).Path);
+
+        if (paths.soundPath == null || !File.Exists(paths.soundPath))
+            paths.soundPath = Path.Combine(dataDir, "audio", Configuration.DefaultSounds.First(e => e.Enabled).Path);
+
 
         CommandManager.AddHandler(CommandName, new CommandInfo(OnCommand)
         {
