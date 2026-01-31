@@ -66,4 +66,11 @@
     <PackageReference Include="SixLabors.ImageSharp" Version="2.0.0" />
     <PackageReference Include="System.Windows.Extensions" Version="10.0.2" />
   </ItemGroup>
+
+  <!-- Force Windows Desktop framework to 10.0.0 for plogon CI compatibility -->
+  <ItemGroup>
+    <KnownFrameworkReference Update="Microsoft.WindowsDesktop.App" IsWindowsOnly="false" TargetingPackVersion="10.0.0" />
+    <KnownFrameworkReference Update="Microsoft.WindowsDesktop.App.WPF" IsWindowsOnly="false" TargetingPackVersion="10.0.0" />
+    <KnownFrameworkReference Update="Microsoft.WindowsDesktop.App.WindowsForms" IsWindowsOnly="false" TargetingPackVersion="10.0.0" />
+  </ItemGroup>
 </Project>
