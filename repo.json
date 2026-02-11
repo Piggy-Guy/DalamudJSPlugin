@@ -3,7 +3,7 @@
     "Author": "Piggy Guy",
     "Name": "Jumpscare",
     "InternalName": "JumpScare",
-    "AssemblyVersion": "1.2.2",
+    "AssemblyVersion": "1.2.3",
     "Description": "Displays an image/gif accompanied by a sound at a random time\n",
     "ApplicableVersion": "any",
     "RepoUrl": "https://github.com/Piggy-Guy/DalamudJSPlugin",
@@ -26,8 +26,8 @@
     "AcceptsFeedback": true,
     "IsHide": "False",
     "IsTestingExclusive": "False",
-    "DownloadLinkInstall": "https://github.com/Piggy-Guy/DalamudJSPlugin/releases/download/1.2.2/Jumpscare.zip",
-    "DownloadLinkTesting": "https://github.com/Piggy-Guy/DalamudJSPlugin/releases/download/1.2.2/Jumpscare.zip",
-    "DownloadLinkUpdate": "https://github.com/Piggy-Guy/DalamudJSPlugin/releases/download/1.2.2/Jumpscare.zip"
+    "DownloadLinkInstall": "https://github.com/Piggy-Guy/DalamudJSPlugin/releases/download/1.2.3/Jumpscare.zip",
+    "DownloadLinkTesting": "https://github.com/Piggy-Guy/DalamudJSPlugin/releases/download/1.2.3/Jumpscare.zip",
+    "DownloadLinkUpdate": "https://github.com/Piggy-Guy/DalamudJSPlugin/releases/download/1.2.3/Jumpscare.zip"
   },
 ]
