@@ -34,7 +34,7 @@ public class MainWindow : Window, IDisposable
     public bool IsRunning => isRunning;
 
     public MainWindow(string imagePath, string wavPath, Configuration config)
-    : base("Jumpscare##HiddenID",
+    : base("Jumpscare##Jumpscare_Main",
            ImGuiWindowFlags.NoTitleBar
          | ImGuiWindowFlags.NoScrollbar
          | ImGuiWindowFlags.NoDecoration
@@ -52,7 +52,6 @@ public class MainWindow : Window, IDisposable
 
         lastFrameTime = DateTime.Now;
     }
-
 
     public void Dispose()
     {
@@ -160,9 +159,6 @@ public class MainWindow : Window, IDisposable
             ScheduleNextTrigger();
     }
 
-
-
-
     public new void Toggle()
     {
         if (!IsOpen)
@@ -179,28 +175,19 @@ public class MainWindow : Window, IDisposable
             IsOpen = false;
         }
     }
+    public override void PreDraw()
+    {
+        Size = ImGui.GetMainViewport().Size;
+        SizeCondition = ImGuiCond.Always;
+
+        Position = Vector2.Zero;
+        PositionCondition = ImGuiCond.Always;
+    }
 
     public override void Draw()
     {
-        Vector2 windowSize = ImGui.GetMainViewport().Size;
-        ImGui.SetNextWindowSize(windowSize, ImGuiCond.Always);
-        ImGui.SetNextWindowPos(Vector2.Zero, ImGuiCond.Always);
-
-        ImGui.Begin("MainWindow",
-            ImGuiWindowFlags.NoScrollbar
-          | ImGuiWindowFlags.NoTitleBar
-          | ImGuiWindowFlags.NoDecoration
-          | ImGuiWindowFlags.NoFocusOnAppearing
-          | ImGuiWindowFlags.NoNavFocus
-          | ImGuiWindowFlags.NoInputs
-          | ImGuiWindowFlags.NoMouseInputs
-          | ImGuiWindowFlags.NoBackground);
-        
         if (!triggerTime.HasValue)
-        {
-            ImGui.End();
             return;
-        }
 
         if (DateTime.Now < triggerTime.Value)
         {
@@ -209,7 +196,7 @@ public class MainWindow : Window, IDisposable
                 var remaining = triggerTime.Value - DateTime.Now;
                 ImGui.TextUnformatted($"Waiting... {remaining.TotalSeconds:F1}s");
             }
-            ImGui.End();
+
             return;
         }
 
@@ -224,25 +211,23 @@ public class MainWindow : Window, IDisposable
             GIF.Update(deltaMs);
 
             float alpha = 1f;
+
             if (GIF.Finished)
             {
                 alpha = 1f - Math.Min(GIF.FadeTimer / GIF.FadeDurationMs, 1f);
+
                 if (alpha <= 0f)
                 {
                     ResetPlayback();
-                    ImGui.End();
                     return;
                 }
             }
-
-            GIF.Render(windowSize, alpha);
+            GIF.Render(ImGui.GetContentRegionAvail(), alpha);
         }
         else if (GIF == null)
         {
             ImGui.TextUnformatted($"Image not found or unsupported: {imgPath}");
         }
-
-        ImGui.End();
     }
 
     private void PlaySoundOnce()

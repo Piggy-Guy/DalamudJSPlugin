@@ -1,4 +1,5 @@
 using Dalamud.Bindings.ImGui;
+using Dalamud.Interface.Utility;
 using Dalamud.Interface.Windowing;
 using FFXIVClientStructs.FFXIV.Common.Math;
 using NAudio.Wave;
@@ -25,9 +26,16 @@ public class ConfigWindow : Window, IDisposable
     private string imageRejectionMessage = "";
     private string soundRejectionMessage = "";
 
-    public ConfigWindow(Plugin plugin) : base("Configuration###WithConstantID")
+    public ConfigWindow(Plugin plugin) : base("Jumpscare Configuration###Jumpscare_Config")
     {
-        SizeCondition = ImGuiCond.Always;
+        var viewport = ImGui.GetMainViewport();
+        var Size = new Vector2(viewport.Size.X * 0.50f, viewport.Size.Y * 0.60f);
+
+        SizeCondition = ImGuiCond.FirstUseEver;
+        SizeConstraints = new WindowSizeConstraints
+        {
+            MinimumSize = new Vector2(viewport.Size.X * 0.10f, viewport.Size.Y * 0.12f),
+        };
 
         previewWindow = new GifPreviewWindow();
         plugin.WindowSystem.AddWindow(previewWindow);
@@ -112,14 +120,14 @@ public class ConfigWindow : Window, IDisposable
                     Enabled = e.Enabled,
                     Path = e.Path
                 }));
+                ReloadMedia();
                 configuration.Save();
 
             }
 
-
             if (ImGui.BeginTable("ImagesTable", 2))
             {
-                ImGui.TableSetupColumn("Enabled", ImGuiTableColumnFlags.WidthFixed, 60);
+                ImGui.TableSetupColumn("Enabled", ImGuiTableColumnFlags.WidthFixed, 50 * ImGuiHelpers.GlobalScale);
                 ImGui.TableSetupColumn("Path");
                 ImGui.TableHeadersRow();
 
@@ -181,13 +189,14 @@ public class ConfigWindow : Window, IDisposable
                     Enabled = e.Enabled,
                     Path = e.Path
                 }));
+                ReloadMedia();
                 configuration.Save();
 
             }
 
             if (ImGui.BeginTable("SoundsTable", 2))
             {
-                ImGui.TableSetupColumn("Enabled", ImGuiTableColumnFlags.WidthFixed, 60);
+                ImGui.TableSetupColumn("Enabled", ImGuiTableColumnFlags.WidthFixed, 50 * ImGuiHelpers.GlobalScale);
                 ImGui.TableSetupColumn("Path");
                 ImGui.TableHeadersRow();
 
@@ -247,7 +256,6 @@ public class ConfigWindow : Window, IDisposable
 
         return enabled[Random.Shared.Next(enabled.Count)].Path;
     }
-
 
     private (string? imagePath, string? soundPath) ResolveCurrentMediaPaths()
     {

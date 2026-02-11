@@ -16,11 +16,13 @@ public class GifPreviewWindow : Window, IDisposable
     private DateTime lastFrameTime;
 
     public GifPreviewWindow()
-        : base("GIF Preview###GifPreview")
+        : base("Jumpscare Preview###Jumpscare_Preview")
     {
+        var viewport = ImGui.GetMainViewport();
+        SizeCondition = ImGuiCond.FirstUseEver;
         SizeConstraints = new WindowSizeConstraints
         {
-            MinimumSize = new Vector2(300, 200)
+            MinimumSize = new Vector2(viewport.Size.X * 0.10f, viewport.Size.Y * 0.10f)
         };
         lastFrameTime = DateTime.Now;
         IsOpen = false;
@@ -92,21 +94,28 @@ public class GifPreviewWindow : Window, IDisposable
     {
         if (!IsOpen) return;
 
+        var windowSize = ImGui.GetContentRegionAvail();
+        float topPadding = windowSize.Y * 0.1f;
+
+        //forces gif down from 0,0 so it doesn't get cut off by the title bar
+        ImGui.BeginChild("GifHolder", new Vector2(windowSize.X, windowSize.Y - topPadding), false,
+            ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoInputs);
+        ImGui.SetCursorPosY(topPadding);
+
         if (!resourcesLoaded)
         {
             ImGui.TextUnformatted("Loading preview...");
         }
-
         else if (gif != null && gif.FramePaths.Count > 0)
         {
             var now = DateTime.Now;
             float deltaMs = (float)(now - lastFrameTime).TotalMilliseconds;
             lastFrameTime = now;
 
+            var remainingSize = new Vector2(windowSize.X, windowSize.Y - topPadding);
             gif.Update(deltaMs);
-            gif.Render(ImGui.GetContentRegionAvail(), 1f);
+            gif.Render(remainingSize, 1f);
 
-            // loop gif
             if (gif.Finished)
                 gif.Reset();
         }
@@ -114,7 +123,11 @@ public class GifPreviewWindow : Window, IDisposable
         {
             ImGui.TextUnformatted("GIF failed to load or is unsupported.");
         }
+
+        ImGui.EndChild();
     }
+
+
 
     public void Dispose()
     {
