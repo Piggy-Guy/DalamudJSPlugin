@@ -35,13 +35,8 @@ public class MainWindow : Window, IDisposable
 
     public MainWindow(string imagePath, string wavPath, Configuration config)
     : base("Jumpscare##Jumpscare_Main",
-           ImGuiWindowFlags.NoTitleBar
-         | ImGuiWindowFlags.NoScrollbar
-         | ImGuiWindowFlags.NoDecoration
-         | ImGuiWindowFlags.NoFocusOnAppearing
-         | ImGuiWindowFlags.NoNavFocus
+         ImGuiWindowFlags.NoDecoration
          | ImGuiWindowFlags.NoInputs
-         | ImGuiWindowFlags.NoMouseInputs
          | ImGuiWindowFlags.NoBackground)
     {
         this.config = config;
