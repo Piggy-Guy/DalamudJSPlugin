@@ -1,4 +1,5 @@
 using Dalamud.Bindings.ImGui;
+using Dalamud.Interface.Utility.Raii;
 using Dalamud.Interface.Windowing;
 using Jumpscare;
 using System;
@@ -30,9 +31,6 @@ public class GifPreviewWindow : Window, IDisposable
 
     public void SetPath(string path)
     {
-        if (currentPath == path)
-            return;
-
         currentPath = ResolveImagePath(path);
         StartPreload();
         IsOpen = true;
@@ -51,13 +49,24 @@ public class GifPreviewWindow : Window, IDisposable
         gif?.Dispose();
         gif = null;
 
+        if (!File.Exists(currentPath))
+        {
+            resourcesLoaded = true;
+            return;
+        }
+
+        if (new FileInfo(currentPath).Length > 30L * 1024 * 1024)
+        {
+            resourcesLoaded = true;
+            return;
+        }
+
         Task.Run(() =>
         {
             try
             {
                 if (!File.Exists(currentPath))
                 {
-                    Plugin.Log.Error($"[GifPreview] File not found: {currentPath}");
                     resourcesLoaded = true;
                     return;
                 }
@@ -84,7 +93,6 @@ public class GifPreviewWindow : Window, IDisposable
             }
             catch (Exception ex)
             {
-                Plugin.Log.Error($"[GifPreview] Failed to preload GIF: {ex}");
                 resourcesLoaded = true;
             }
         }, token);
@@ -98,9 +106,12 @@ public class GifPreviewWindow : Window, IDisposable
         float topPadding = windowSize.Y * 0.1f;
 
         //forces gif down from 0,0 so it doesn't get cut off by the title bar
-        ImGui.BeginChild("GifHolder", new Vector2(windowSize.X, windowSize.Y - topPadding), false,
+        using var child = ImRaii.Child("GifHolder", new Vector2(windowSize.X, windowSize.Y - topPadding), false,
             ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoInputs);
         ImGui.SetCursorPosY(topPadding);
+
+        if (!child.Success)
+            return;
 
         if (!resourcesLoaded)
         {
@@ -121,13 +132,9 @@ public class GifPreviewWindow : Window, IDisposable
         }
         else
         {
-            ImGui.TextUnformatted("GIF failed to load or is unsupported.");
+            ImGui.TextUnformatted("GIF has changed paths, is over 30MB, or is invalid.");
         }
-
-        ImGui.EndChild();
     }
-
-
 
     public void Dispose()
     {

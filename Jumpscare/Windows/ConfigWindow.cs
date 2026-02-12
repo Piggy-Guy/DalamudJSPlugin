@@ -228,7 +228,7 @@ public class ConfigWindow : Window, IDisposable
                     ImGui.TableNextColumn();
                     if (ImGui.Selectable(entry.Path))
                     {
-                        PlayAudioPreview(ResolveSoundPath(entry.Path));
+                        PlayAudioPreview("WAV/MP3", ResolveSoundPath(entry.Path));
                     }
                 }
 
@@ -271,10 +271,7 @@ public class ConfigWindow : Window, IDisposable
         return (imgPath, sndPath);
     }
 
-    private void DrawAddMedia(
-    string label,
-    List<MediaEntry> targetList,
-    ref string pathBuffer)
+    private void DrawAddMedia(string label, List<MediaEntry> targetList, ref string pathBuffer)
     {
         ImGui.InputText($"New {label} Path", ref pathBuffer, 256);
 
@@ -322,14 +319,12 @@ public class ConfigWindow : Window, IDisposable
                 configuration.Save();
                 ReloadMedia();
             }
-
-
             pathBuffer = "";
             ClearRejection(label);
         }
     }
 
-    private void PlayAudioPreview(string path)
+    private void PlayAudioPreview(string label, string path)
     {
         try
         {
@@ -343,7 +338,7 @@ public class ConfigWindow : Window, IDisposable
         }
         catch (Exception ex)
         {
-            Plugin.Log.Error($"Failed to play audio preview: {ex}");
+            SetRejection(label, "Failed to play audio preview, is the audio path still valid?");
             StopPreview();
         }
     }

@@ -140,7 +140,7 @@ namespace Jumpscare
         {
             if (frames.Count == 0) return;
 
-            if (previousFrame >= 0 && previousFrame != currentFrame && currentFrame < frames.Count - 1)
+            if (previousFrame >= 0 && previousFrame != currentFrame && currentFrame <= frames.Count - 1)
             {
                 var prevTex = frames[previousFrame].Texture;
                 var prevWrap = prevTex.GetWrapOrEmpty();

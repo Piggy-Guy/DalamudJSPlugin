@@ -64,6 +64,8 @@ public class MainWindow : Window, IDisposable
     {
         if (preloadStarted) return;
         preloadStarted = true;
+        if (File.Exists(imgPath) && new FileInfo(imgPath).Length > 30L * 1024 * 1024)
+            return;
 
         preloadCts = new CancellationTokenSource();
         var token = preloadCts.Token;
@@ -74,7 +76,6 @@ public class MainWindow : Window, IDisposable
             {
                 if (!File.Exists(imgPath))
                 {
-                    Plugin.Log.Error($"Image not found: {imgPath}");
                     return;
                 }
 
@@ -139,6 +140,7 @@ public class MainWindow : Window, IDisposable
                 : enabledImages[rng.Next(enabledImages.Count)];
 
             imgPath = ResolveImagePath(imageEntry.Path);
+
         }
 
         // pick new sound
@@ -177,11 +179,21 @@ public class MainWindow : Window, IDisposable
     }
     public override void PreDraw()
     {
-        Size = ImGui.GetMainViewport().Size;
+        var viewport = ImGui.GetMainViewport();
+
+        Size = viewport.Size;
         SizeCondition = ImGuiCond.Always;
 
-        Position = Vector2.Zero;
+        Position = viewport.Pos;
         PositionCondition = ImGuiCond.Always;
+
+        // Remove all padding
+        ImGui.PushStyleVar(ImGuiStyleVar.WindowPadding, Vector2.Zero);
+        ImGui.PushStyleVar(ImGuiStyleVar.WindowBorderSize, 0f);
+    }
+    public override void PostDraw()
+    {
+        ImGui.PopStyleVar(2);
     }
 
     public override void Draw()
@@ -222,11 +234,15 @@ public class MainWindow : Window, IDisposable
                     return;
                 }
             }
-            GIF.Render(ImGui.GetContentRegionAvail(), alpha);
+            ImGui.SetCursorPos(Vector2.Zero);
+
+            var size = ImGui.GetWindowSize();
+
+            GIF.Render(size, alpha);
         }
         else if (GIF == null)
         {
-            ImGui.TextUnformatted($"Image not found or unsupported: {imgPath}");
+            ImGui.TextUnformatted($"Image not found, is over 30MB, or unsupported: {imgPath}");
         }
     }
 
