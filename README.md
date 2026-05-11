@@ -18,12 +18,8 @@ Uploading custom assets for use is also possible (image format must be **gif/png
 
 ## Installation
 - Enter **/xlsettings** in the chat window or select **Dalamud Settings** in the System menu.
-- Go to the **Experimental** tab and scroll down to the **Custom Plugin Repositories** section.
-- Copy and paste the repo.json link into the first free text input field.
-```
-https://raw.githubusercontent.com/Piggy-Guy/DalamudJSPlugin/master/repo.json
-```
-- Click on the + button and make sure the checkmark beside the new field is **Enabled**.
+- Go to the **Experimental** tab and check the box labeled **Get plugin testing builds** at the top.
 - Click on the **Save** icon in the bottom right.
 - Enter **/xlplugins** in the chat window or select **Dalamud Plugins** in the System menu.
-- In the **All Plugins** tab, search for **Jumpscare** by Piggy Guy and install it.
+- In the **All Plugins** tab, click the **Testing Available** menu.
+- Search for **Jumpscare** by Piggy Guy and install it.
