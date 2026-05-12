@@ -17,9 +17,5 @@ Uploading custom assets for use is also possible (image format must be **gif/png
 - Withered Foxy jumpscare
 
 ## Installation
-- Enter **/xlsettings** in the chat window or select **Dalamud Settings** in the System menu.
-- Go to the **Experimental** tab and check the box labeled **Get plugin testing builds** at the top.
-- Click on the **Save** icon in the bottom right.
 - Enter **/xlplugins** in the chat window or select **Dalamud Plugins** in the System menu.
-- In the **All Plugins** tab, click the **Testing Available** menu.
-- Search for **Jumpscare** by Piggy Guy and install it.
+- In the **All Plugins** tab, search for **Jumpscare** by Piggy Guy and install it.
